@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin – SV Grün-Weiß Platz-Sponsoring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand"><span class="brand-badge">SV</span> Admin-Bereich</div>
+  <nav><a href="index.html">Zur Startseite</a></nav>
+</header>
+
+<div class="admin-shell">
+
+  <div class="admin-login-box" id="loginBox">
+    <div class="modal-kicker">Admin-Bereich</div>
+    <h3>Anmelden</h3>
+    <input class="email-field" type="email" placeholder="admin@sv-gruen-weiss.de" id="loginEmail">
+    <input class="email-field" type="password" placeholder="Passwort" id="loginPassword">
+    <button class="btn-primary" id="loginBtn">Anmelden</button>
+    <p class="modal-error" id="loginError" style="display:none;"></p>
+    <p class="modal-note">Zugang wird in Supabase unter Authentication → Users angelegt (siehe README).</p>
+  </div>
+
+  <div id="panel" style="display:none;">
+    <div class="admin-panel-head">
+      <h3>Felder verwalten</h3>
+      <button class="btn-secondary" id="logoutBtn">Abmelden</button>
+    </div>
+    <p class="admin-hint">Status ändern, Felder manuell reservieren, bei Nichtzahlung zurücksetzen, Logos hochladen. Änderungen sind sofort auf der Startseite sichtbar.</p>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Feld</th><th>Art</th><th>Status</th><th>Sponsor</th><th>Kontakt</th><th>Logo</th><th>Spendenbetrag</th><th></th></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var fields = [];
+
+  var loginBox = document.getElementById("loginBox");
+  var panel = document.getElementById("panel");
+  var tableBody = document.getElementById("tableBody");
+
+  async function checkSession(){
+    var { data } = await sb.auth.getSession();
+    if (data.session){
+      showPanel();
+    }
+  }
+
+  document.getElementById("loginBtn").addEventListener("click", async function(){
+    var email = document.getElementById("loginEmail").value.trim();
+    var password = document.getElementById("loginPassword").value;
+    var errEl = document.getElementById("loginError");
+    var { error } = await sb.auth.signInWithPassword({ email: email, password: password });
+    if (error){
+      errEl.textContent = "Anmeldung fehlgeschlagen: " + error.message;
+      errEl.style.display = "block";
+      return;
+    }
+    errEl.style.display = "none";
+    showPanel();
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", async function(){
+    await sb.auth.signOut();
+    panel.style.display = "none";
+    loginBox.style.display = "block";
+  });
+
+  function showPanel(){
+    loginBox.style.display = "none";
+    panel.style.display = "block";
+    loadFields();
+  }
+
+  async function loadFields(){
+    var { data, error } = await sb.from("fields").select("*").order("row_num").order("col_num");
+    if (error){ console.error(error); return; }
+    fields = data;
+    renderTable();
+  }
+
+  function renderTable(){
+    tableBody.innerHTML = "";
+    fields.forEach(function(f){
+      var tr = document.createElement("tr");
+      tr.dataset.id = f.id;
+      var statusOptions = ["frei","reserviert","verkauft"].map(function(s){
+        return '<option value="'+s+'"'+(f.status===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';
+      }).join('');
+      tr.innerHTML =
+        '<td>'+f.id+'</td>'+
+        '<td>'+f.kind+'</td>'+
+        '<td><select class="f-status">'+statusOptions+'</select></td>'+
+        '<td><input type="text" class="f-sponsor" value="'+(f.sponsor||'')+'" placeholder="Sponsor-Name"></td>'+
+        '<td style="font-size:11px;color:var(--ink-soft)">'+(f.pending_email ? f.pending_email : '–')+'</td>'+
+        '<td><input type="file" accept="image/png,image/jpeg" class="f-logo">'+
+          (f.logo_url ? '<img class="admin-logo-preview" src="'+f.logo_url+'">' : '')+
+        '</td>'+
+        '<td>'+f.price+' €</td>'+
+        '<td class="admin-row-actions"><button class="btn-mini" data-action="save">Speichern</button><button class="btn-mini secondary" data-action="reset">Zurücksetzen</button></td>';
+      tableBody.appendChild(tr);
+    });
+  }
+
+  tableBody.addEventListener("click", async function(e){
+    var btn = e.target.closest("button");
+    if (!btn) return;
+    var tr = e.target.closest("tr");
+    var id = tr.dataset.id;
+
+    if (btn.dataset.action === "reset"){
+      btn.disabled = true;
+      var { error } = await sb.from("fields").update({
+        status: "frei", sponsor: null, logo_url: null, pending_name: null, pending_email: null
+      }).eq("id", id);
+      if (error) alert("Fehler beim Zurücksetzen: " + error.message);
+      await loadFields();
+      return;
+    }
+
+    if (btn.dataset.action === "save"){
+      btn.disabled = true;
+      btn.textContent = "Speichert …";
+      var statusVal = tr.querySelector(".f-status").value;
+      var sponsorVal = tr.querySelector(".f-sponsor").value.trim();
+      var fileInput = tr.querySelector(".f-logo");
+      var file = fileInput.files[0];
+      var logoUrl = null;
+
+      if (file){
+        var path = id + "-" + Date.now() + "." + file.name.split(".").pop();
+        var { error: uploadError } = await sb.storage.from("logos").upload(path, file, { upsert: true });
+        if (uploadError){
+          alert("Logo-Upload fehlgeschlagen: " + uploadError.message);
+        } else {
+          var { data: urlData } = sb.storage.from("logos").getPublicUrl(path);
+          logoUrl = urlData.publicUrl;
+        }
+      }
+
+      var updatePayload = { status: statusVal };
+      if (sponsorVal) updatePayload.sponsor = sponsorVal;
+      if (logoUrl) updatePayload.logo_url = logoUrl;
+
+      var { error } = await sb.from("fields").update(updatePayload).eq("id", id);
+      if (error) alert("Fehler beim Speichern: " + error.message);
+      await loadFields();
+    }
+  });
+
+  checkSession();
+})();
+</script>
+</body>
+</html>

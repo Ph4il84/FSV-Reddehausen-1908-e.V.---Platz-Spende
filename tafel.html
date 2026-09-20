@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unsere Unterstützer – SV Grün-Weiß</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header no-print">
+  <div class="brand"><span class="brand-badge">SV</span> SV Grün-Weiß</div>
+  <nav><a href="index.html">Zur Startseite</a></nav>
+</header>
+
+<div class="tafel-shell">
+  <div class="tafel-head">
+    <h1>Unsere Unterstützer</h1>
+    <p>Vielen Dank an alle, die unseren Platz möglich machen.</p>
+  </div>
+
+  <div class="tafel-actions no-print">
+    <button class="btn-primary" style="width:auto;padding:11px 22px;" id="printBtn">Drucken / Als PDF speichern</button>
+  </div>
+
+  <div class="tafel-grid" id="tafelGrid">
+    <div class="tafel-empty">Wird geladen …</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var colors = ["#1C5C3F","#8C6D1F","#4A5568","#7A3B3B","#365C7D","#5C4A7A","#2F6B5E"];
+  function colorFor(name){
+    var sum = 0; for (var i=0;i<name.length;i++) sum += name.charCodeAt(i);
+    return colors[sum % colors.length];
+  }
+  function initials(name){
+    return (name||"?").split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase();
+  }
+
+  async function load(){
+    var grid = document.getElementById("tafelGrid");
+    var { data, error } = await sb.from("fields")
+      .select("*")
+      .eq("status","verkauft")
+      .order("row_num").order("col_num");
+
+    if (error){
+      grid.innerHTML = '<div class="tafel-empty">Die Unterstützer-Liste konnte nicht geladen werden.</div>';
+      console.error(error);
+      return;
+    }
+    if (!data.length){
+      grid.innerHTML = '<div class="tafel-empty">Noch keine Unterstützer eingetragen.</div>';
+      return;
+    }
+    grid.innerHTML = "";
+    data.forEach(function(f){
+      var card = document.createElement("div");
+      card.className = "tafel-card";
+      var logoHtml = f.logo_url
+        ? '<img src="'+f.logo_url+'" alt="'+(f.sponsor||"")+'">'
+        : '';
+      card.innerHTML =
+        '<div class="tafel-logo" style="background:'+(f.logo_url ? "transparent" : colorFor(f.sponsor||f.id))+'">'+
+          (logoHtml || initials(f.sponsor)) +
+        '</div>'+
+        '<div class="tafel-name">'+(f.sponsor || "Unbekannt")+'</div>'+
+        '<div class="tafel-field-id">Feld '+f.id+(f.special ? " · "+f.kind : "")+'</div>';
+      grid.appendChild(card);
+    });
+  }
+
+  document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+
+  load();
+})();
+</script>
+</body>
+</html>
