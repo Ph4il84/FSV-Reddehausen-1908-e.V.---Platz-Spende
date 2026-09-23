@@ -68,13 +68,13 @@ img{max-width:100%;}
   background-position:center,center;
   background-repeat:no-repeat,repeat;}
 .field-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);gap:1px;}
-.cell{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s ease;border:none;padding:0;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.55);}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s ease;border:none;padding:0;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.55);container-type:inline-size;}
 .cell:hover{transform:scale(1.1);z-index:5;}
 .cell:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;z-index:6;}
 .cell.frei{background:rgba(255,255,255,0);}
 .cell.frei:hover{background:rgba(255,255,255,.18);}
 .cell.reserviert{background:var(--reserved);}
-.cell.reserviert::after{content:"Reserviert";display:block;color:var(--chalk);font-size:clamp(4px,1.1vw,7px);font-weight:600;letter-spacing:.3px;transform:rotate(-28deg);white-space:nowrap;opacity:.9;}
+.cell.reserviert::after{content:"Reserviert";display:block;color:var(--chalk);font-size:clamp(7px,1.6vw,13px);font-size:20cqi;font-weight:700;letter-spacing:.2px;transform:rotate(-28deg);white-space:nowrap;opacity:.92;}
 .cell.verkauft{background:var(--card-bg);}
 .cell.verkauft::before{content:"VERKAUFT";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(3px,.9vw,6px);font-weight:700;letter-spacing:.5px;color:var(--grass-dark);opacity:.16;transform:rotate(-28deg);pointer-events:none;white-space:nowrap;}
 .logo-chip{width:64%;height:64%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Teko',sans-serif;font-weight:600;color:#fff;font-size:clamp(6px,1.6vw,11px);z-index:1;overflow:hidden;}
