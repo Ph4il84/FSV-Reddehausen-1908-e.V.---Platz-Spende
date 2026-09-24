@@ -45,10 +45,12 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="config.js"></script>
 <script>
 (function(){
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
   var fields = [];
 
   var loginBox = document.getElementById("loginBox");
@@ -113,7 +115,9 @@
           (f.logo_url ? '<img class="admin-logo-preview" src="'+f.logo_url+'">' : '')+
         '</td>'+
         '<td>'+f.price+' €</td>'+
-        '<td class="admin-row-actions"><button class="btn-mini" data-action="save">Speichern</button><button class="btn-mini secondary" data-action="reset">Zurücksetzen</button></td>';
+        '<td class="admin-row-actions"><button class="btn-mini" data-action="save">Speichern</button><button class="btn-mini secondary" data-action="reset">Zurücksetzen</button>'+
+          (f.status === "reserviert" && f.pending_email ? '<button class="btn-mini" data-action="send-sponsor-mail">Spender-Mail senden</button>' : '')+
+        '</td>';
       tableBody.appendChild(tr);
     });
   }
@@ -161,6 +165,30 @@
       var { error } = await sb.from("fields").update(updatePayload).eq("id", id);
       if (error) alert("Fehler beim Speichern: " + error.message);
       await loadFields();
+      return;
+    }
+
+    if (btn.dataset.action === "send-sponsor-mail"){
+      var field = fields.find(function(f){ return String(f.id) === String(id); });
+      if (!field || !field.pending_email){
+        alert("Keine E-Mail-Adresse für dieses Feld hinterlegt.");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Sende …";
+      try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID_SPONSOR, {
+          field_id: field.id,
+          name: field.pending_name || field.sponsor || "",
+          email: field.pending_email,
+          price: field.price
+        });
+        btn.textContent = "E-Mail gesendet";
+      } catch (err){
+        btn.disabled = false;
+        btn.textContent = "Spender-Mail senden";
+        alert("Fehler beim Senden: " + (err && err.text ? err.text : err));
+      }
     }
   });
 

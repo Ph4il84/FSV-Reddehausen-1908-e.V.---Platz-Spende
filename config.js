@@ -10,3 +10,6 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const EMAILJS_PUBLIC_KEY = "rMa-xDBDs6DtsRMUR";
 const EMAILJS_SERVICE_ID = "service_1ssixgn";
 const EMAILJS_TEMPLATE_ID = "template_6fjh1hn";
+
+// EmailJS: Zahlungsaufforderung an den Sponsor/Spender (manuell im Admin-Bereich ausgelöst).
+const EMAILJS_TEMPLATE_ID_SPONSOR = "template_z7bimno";
