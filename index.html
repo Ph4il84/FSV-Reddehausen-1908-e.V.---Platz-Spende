@@ -113,20 +113,6 @@
     cell.style.gridRow = f.row_num + " / span " + f.rowspan;
     cell.setAttribute("aria-label", (f.special ? f.kind : "Feld") + " " + f.id + ", " + f.status);
     cell.dataset.id = f.id;
-    if (f.status === "verkauft"){
-      var chip = document.createElement("span");
-      chip.className = "logo-chip";
-      if (f.logo_url){
-        var img = document.createElement("img");
-        img.src = f.logo_url;
-        img.alt = f.sponsor || "";
-        chip.appendChild(img);
-      } else {
-        chip.style.background = colorFor(f.sponsor || f.id);
-        chip.textContent = initials(f.sponsor);
-      }
-      cell.appendChild(chip);
-    }
     var num = document.createElement("span");
     num.className = "cell-num";
     num.textContent = f.id;
@@ -233,7 +219,7 @@
       body =
         '<div class="modal-kicker">Feld '+f.id+'</div>'+
         '<h3>'+(f.sponsor || "Vielen Dank!")+'</h3>'+
-        '<p class="desc">Dieses Feld wird'+(f.sponsor ? " von "+f.sponsor : "")+' unterstützt und zeigt sein Logo. Vielen Dank für die Unterstützung!</p>';
+        '<p class="desc">Dieses Feld wird'bereits unterstützt. Vielen Dank für die Unterstützung!</p>';
     }
     modal.innerHTML = '<button class="modal-close" id="modalClose" aria-label="Schließen">×</button>' + body;
     backdrop.classList.add("open");

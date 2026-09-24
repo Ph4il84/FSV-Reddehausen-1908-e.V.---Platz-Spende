@@ -76,7 +76,7 @@ img{max-width:100%;}
 .cell.reserviert{background:var(--reserved);}
 .cell.reserviert::after{content:"Reserviert";display:block;color:var(--chalk);font-size:clamp(12px,1.4vw,18px);font-weight:700;letter-spacing:.2px;transform:rotate(-28deg);white-space:nowrap;opacity:.92;}
 .cell.verkauft{background:var(--card-bg);}
-.cell.verkauft::before{content:"VERKAUFT";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(3px,.9vw,6px);font-weight:700;letter-spacing:.5px;color:var(--grass-dark);opacity:.16;transform:rotate(-28deg);pointer-events:none;white-space:nowrap;}
+.cell.verkauft::after{content:"Verkauft";display:block;color:var(--grass-dark);font-size:clamp(12px,1.4vw,18px);font-weight:700;letter-spacing:.2px;transform:rotate(-28deg);white-space:nowrap;opacity:.92;}
 .logo-chip{width:64%;height:64%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Teko',sans-serif;font-weight:600;color:#fff;font-size:clamp(6px,1.6vw,11px);z-index:1;overflow:hidden;}
 .logo-chip img{width:100%;height:100%;object-fit:cover;}
 .cell.special{border:1.5px solid var(--gold);}
