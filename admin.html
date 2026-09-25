@@ -45,12 +45,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="config.js"></script>
 <script>
 (function(){
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
   var fields = [];
 
   var loginBox = document.getElementById("loginBox");
@@ -182,17 +180,20 @@
       btn.disabled = true;
       btn.textContent = "Sende …";
       try {
-        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID_SPONSOR, {
-          field_id: field.id,
-          name: field.pending_name || field.sponsor || "",
-          email: field.pending_email,
-          price: field.price
+        var { error: sendError } = await sb.functions.invoke("notify-sponsor", {
+          body: {
+            field_id: field.id,
+            name: field.pending_name || field.sponsor || "",
+            email: field.pending_email,
+            price: field.price
+          }
         });
+        if (sendError) throw sendError;
         btn.textContent = "E-Mail gesendet";
       } catch (err){
         btn.disabled = false;
         btn.textContent = "Spender-Mail senden";
-        alert("Fehler beim Senden: " + (err && err.text ? err.text : err));
+        alert("Fehler beim Senden: " + (err && err.message ? err.message : err));
       }
     }
   });
