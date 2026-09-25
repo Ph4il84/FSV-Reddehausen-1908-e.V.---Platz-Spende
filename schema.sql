@@ -18,6 +18,11 @@ create table if not exists public.fields (
   logo_url text,
   pending_name text,
   pending_email text,
+  -- Einwilligung zur Veröffentlichung von Name/Logo (Website + Spendertafel).
+  -- Nachweis nach Art. 5 Abs. 2 DSGVO (Rechenschaftspflicht): wer, wann, welcher Text-Stand.
+  consent_veroeffentlichung boolean not null default false,
+  consent_timestamp timestamptz,
+  consent_text_version text,
   updated_at timestamptz not null default now()
 );
 
@@ -45,7 +50,10 @@ create policy "Eingeloggte Admins duerfen Felder aendern"
 -- ------------------------------------------------------------
 -- Funktion: sicheres Reservieren durch Besucher
 -- ------------------------------------------------------------
-create or replace function public.reserve_field(p_id text, p_name text, p_email text)
+-- p_consent: Einwilligung zur Veröffentlichung von Name/Logo. Wird ohne Zustimmung
+-- abgelehnt; der Zeitstempel wird serverseitig gesetzt (now()), nicht vom Client
+-- übernommen, damit er nicht manipulierbar ist.
+create or replace function public.reserve_field(p_id text, p_name text, p_email text, p_consent boolean default false)
 returns public.fields
 language plpgsql
 security definer
@@ -60,11 +68,17 @@ begin
   if p_email is null or length(trim(p_email)) = 0 then
     raise exception 'E-Mail fehlt.';
   end if;
+  if p_consent is not true then
+    raise exception 'Einwilligung zur Veröffentlichung fehlt.';
+  end if;
 
   update public.fields
   set status = 'reserviert',
       pending_name = trim(p_name),
       pending_email = trim(p_email),
+      consent_veroeffentlichung = true,
+      consent_timestamp = now(),
+      consent_text_version = 'v1-2026-09',
       updated_at = now()
   where id = p_id and status = 'frei'
   returning * into result;
@@ -77,7 +91,7 @@ begin
 end;
 $$;
 
-grant execute on function public.reserve_field(text, text, text) to anon, authenticated;
+grant execute on function public.reserve_field(text, text, text, boolean) to anon, authenticated;
 
 -- ------------------------------------------------------------
 -- Realtime aktivieren, damit alle Besucher Änderungen live sehen

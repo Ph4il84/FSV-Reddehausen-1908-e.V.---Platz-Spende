@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
     <p class="admin-hint">Status ändern, Felder manuell reservieren, bei Nichtzahlung zurücksetzen, Logos hochladen. Änderungen sind sofort auf der Startseite sichtbar.</p>
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead><tr><th>Feld</th><th>Art</th><th>Status</th><th>Sponsor</th><th>Kontakt</th><th>Logo</th><th>Spendenbetrag</th><th></th></tr></thead>
+        <thead><tr><th>Feld</th><th>Art</th><th>Status</th><th>Sponsor</th><th>Kontakt</th><th>Einwilligung</th><th>Logo</th><th>Spendenbetrag</th><th></th></tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
@@ -111,6 +111,11 @@
         '<td><select class="f-status">'+statusOptions+'</select></td>'+
         '<td><input type="text" class="f-sponsor" value="'+(f.sponsor||'')+'" placeholder="Sponsor-Name"></td>'+
         '<td style="font-size:11px;color:var(--ink-soft)">'+(f.pending_email ? f.pending_email : '–')+'</td>'+
+        '<td style="font-size:11px;color:var(--ink-soft)">'+
+          (f.consent_veroeffentlichung
+            ? '✓ '+new Date(f.consent_timestamp).toLocaleString('de-DE')
+            : '–')+
+        '</td>'+
         '<td><input type="file" accept="image/png,image/jpeg" class="f-logo">'+
           (f.logo_url ? '<img class="admin-logo-preview" src="'+f.logo_url+'">' : '')+
         '</td>'+

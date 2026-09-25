@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -69,7 +69,7 @@
       <p>Mit Name und E-Mail-Adresse reserviert ihr das Feld. Wir melden uns mit den Daten für eure Spende.</p>
     </li>
     <li><span class="step-num">3</span>Logo einreichen
-      <p>Nach Eingang eurer Spende weisen wir euch das Feld zu. Ihr könnt ein Foto oder Logo für die spätere Unterstützertafel hochladen.</p>
+      <p>Nach Eingang eurer Spende schalten wir euer Feld frei und stellen euer Logo auf den Platz.</p>
     </li>
   </ol>
 </section>
@@ -203,9 +203,13 @@
           '<div><span class="m-label">Spendenbetrag</span><span class="m-val">'+f.price+' €</span></div>'+
           '<div><span class="m-label">Größe</span><span class="m-val" style="font-size:16px">'+f.size+'</span></div>'+
         '</div>'+
-        '<p class="desc">Frei zur Unterstützung. Nach Eingang eurer Spende wird euer Feld als verkauft markiert.</p>'+
+        '<p class="desc">Frei zur Unterstützung. Nach Eingang eurer Spende stellen wir euer Logo auf dieses Feld.</p>'+
         '<input class="email-field" type="text" placeholder="Name / Firma" id="reserveName">'+
         '<input class="email-field" type="email" placeholder="eure@email.de" id="reserveEmail">'+
+        '<label class="consent-checkbox" for="reserveConsent">'+
+          '<input type="checkbox" id="reserveConsent">'+
+          '<span>Ich bin damit einverstanden, dass mein Name (bzw. das Logo meines Unternehmens) auf der Website und der Unterstützer-Tafel im Vereinsheim veröffentlicht wird. Widerruf jederzeit per E-Mail an Phildietrich@web.de möglich.</span>'+
+        '</label>'+
         '<button class="btn-primary" id="reserveBtn">Feld reservieren</button>'+
         '<p class="modal-error" id="reserveError" style="display:none;"></p>'+
         '<p class="modal-note">Ihr erhaltet die Kontodaten für eure Spende per E-Mail. Freigabe erfolgt manuell nach Zahlungseingang.</p>'+
@@ -229,10 +233,18 @@
       rb.addEventListener("click", async function(){
         var nameEl = document.getElementById("reserveName");
         var emailEl = document.getElementById("reserveEmail");
+        var consentEl = document.getElementById("reserveConsent");
         var errEl = document.getElementById("reserveError");
         var valid = true;
         if (!nameEl.value.trim()){ nameEl.classList.add("input-error"); valid = false; } else nameEl.classList.remove("input-error");
         if (!emailEl.value.trim()){ emailEl.classList.add("input-error"); valid = false; } else emailEl.classList.remove("input-error");
+        if (!consentEl.checked){
+          errEl.textContent = "Bitte bestätigt die Veröffentlichung eures Namens, um fortzufahren.";
+          errEl.style.display = "block";
+          valid = false;
+        } else {
+          errEl.style.display = "none";
+        }
         if (!valid) return;
 
         rb.disabled = true;
@@ -240,7 +252,8 @@
         var { error } = await sb.rpc("reserve_field", {
           p_id: f.id,
           p_name: nameEl.value.trim(),
-          p_email: emailEl.value.trim()
+          p_email: emailEl.value.trim(),
+          p_consent: consentEl.checked
         });
         if (error){
           errEl.textContent = "Dieses Feld wurde gerade eben von jemand anderem reserviert. Bitte wählt ein anderes Feld.";
