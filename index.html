@@ -84,14 +84,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="config.js"></script>
 <script>
 (function(){
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  if (window.emailjs && typeof EMAILJS_PUBLIC_KEY !== "undefined" && EMAILJS_PUBLIC_KEY.indexOf("DEIN-") !== 0){
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-  }
   var fields = [];
 
   var colors = ["#1C5C3F","#8C6D1F","#4A5568","#7A3B3B","#365C7D","#5C4A7A","#2F6B5E"];
@@ -266,18 +262,18 @@
         // Reservierung ist bereits in der Datenbank gespeichert (siehe oben).
         // Die Benachrichtigung ist nur ein "nice to have" -- schlägt sie fehl,
         // bleibt die Reservierung trotzdem gültig, es wird nur eine Warnung geloggt.
-        if (window.emailjs && typeof EMAILJS_SERVICE_ID !== "undefined" && EMAILJS_SERVICE_ID.indexOf("DEIN-") !== 0){
-          try {
-            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        try {
+          await sb.functions.invoke("notify-reservation", {
+            body: {
               field_id: f.id,
               field_kind: f.special ? f.kind : "Standardfeld",
               price: f.price,
               name: nameEl.value.trim(),
               email: emailEl.value.trim()
-            });
-          } catch (emailErr){
-            console.error("Benachrichtigung konnte nicht gesendet werden:", emailErr);
-          }
+            }
+          });
+        } catch (notifyErr){
+          console.error("Benachrichtigung konnte nicht gesendet werden:", notifyErr);
         }
 
         closeModal();
