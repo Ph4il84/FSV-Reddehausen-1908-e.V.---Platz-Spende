@@ -185,6 +185,20 @@ footer{max-width:1140px;margin:80px auto 0;padding:24px;border-top:1px solid var
 .tafel-field-id{font-size:11px;color:var(--ink-soft);margin-top:2px;}
 .tafel-empty{grid-column:1/-1;text-align:center;color:var(--ink-soft);padding:40px 0;}
 
+/* ---- Impressum / Datenschutzerklärung ---- */
+.legal-shell{max-width:760px;margin:0 auto;padding:40px 24px 80px;}
+.legal-shell h1{font-size:clamp(28px,4vw,40px);margin-bottom:18px;}
+.legal-shell h2{font-size:22px;margin:34px 0 10px;color:var(--grass-dark);}
+:root[data-theme="dark"] .legal-shell h2{color:var(--gold-soft);}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .legal-shell h2{color:var(--gold-soft);}}
+.legal-shell h3{font-size:16px;margin:22px 0 6px;font-family:'Work Sans',sans-serif;font-weight:600;}
+.legal-shell p{font-size:14.5px;line-height:1.6;color:var(--ink-soft);margin:0 0 12px;}
+.legal-shell ul, .legal-shell ol{font-size:14.5px;line-height:1.6;color:var(--ink-soft);padding-left:22px;margin:0 0 14px;}
+.legal-shell li{margin-bottom:6px;}
+.legal-shell .legal-updated{font-size:12px;color:var(--ink-soft);margin-bottom:28px;}
+.legal-shell .placeholder{color:var(--error);font-style:italic;}
+.legal-shell a.back-link{display:inline-block;margin-bottom:22px;font-size:13px;text-decoration:underline;color:var(--ink-soft);}
+
 @media print{
   .no-print{display:none !important;}
   body{background:#fff !important;color:#000 !important;}
