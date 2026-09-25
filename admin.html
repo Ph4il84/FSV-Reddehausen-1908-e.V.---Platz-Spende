@@ -36,7 +36,7 @@
     <p class="admin-hint">Status ändern, Felder manuell reservieren, bei Nichtzahlung zurücksetzen, Logos hochladen. Änderungen sind sofort auf der Startseite sichtbar.</p>
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead><tr><th>Feld</th><th>Art</th><th>Status</th><th>Sponsor</th><th>Kontakt</th><th>Einwilligung</th><th>Logo</th><th>Spendenbetrag</th><th></th></tr></thead>
+        <thead><tr><th>Feld</th><th>Art</th><th>Status</th><th>Sponsor</th><th>Kontakt</th><th>Einwilligung</th><th>Logo</th><th>Spendenbetrag</th><th>Zahlungs-Mail</th><th></th></tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
@@ -118,8 +118,13 @@
           (f.logo_url ? '<img class="admin-logo-preview" src="'+f.logo_url+'">' : '')+
         '</td>'+
         '<td>'+f.price+' €</td>'+
+        '<td style="font-size:11px;color:var(--ink-soft)">'+
+          (f.sponsor_mail_sent
+            ? '✓ '+new Date(f.sponsor_mail_sent_at).toLocaleString('de-DE')
+            : '–')+
+        '</td>'+
         '<td class="admin-row-actions"><button class="btn-mini" data-action="save">Speichern</button><button class="btn-mini secondary" data-action="reset">Zurücksetzen</button>'+
-          (f.status === "reserviert" && f.pending_email ? '<button class="btn-mini" data-action="send-sponsor-mail">Spender-Mail senden</button>' : '')+
+          (f.status === "reserviert" && f.pending_email ? '<button class="btn-mini" data-action="send-sponsor-mail">'+(f.sponsor_mail_sent ? 'Erneut senden' : 'Spender-Mail senden')+'</button>' : '')+
         '</td>';
       tableBody.appendChild(tr);
     });
@@ -134,7 +139,8 @@
     if (btn.dataset.action === "reset"){
       btn.disabled = true;
       var { error } = await sb.from("fields").update({
-        status: "frei", sponsor: null, logo_url: null, pending_name: null, pending_email: null
+        status: "frei", sponsor: null, logo_url: null, pending_name: null, pending_email: null,
+        sponsor_mail_sent: false, sponsor_mail_sent_at: null
       }).eq("id", id);
       if (error) alert("Fehler beim Zurücksetzen: " + error.message);
       await loadFields();
@@ -189,7 +195,12 @@
           }
         });
         if (sendError) throw sendError;
-        btn.textContent = "E-Mail gesendet";
+        var { error: markError } = await sb.from("fields").update({
+          sponsor_mail_sent: true,
+          sponsor_mail_sent_at: new Date().toISOString()
+        }).eq("id", id);
+        if (markError) console.error("Konnte Mail-Status nicht speichern:", markError);
+        await loadFields();
       } catch (err){
         btn.disabled = false;
         btn.textContent = "Spender-Mail senden";
