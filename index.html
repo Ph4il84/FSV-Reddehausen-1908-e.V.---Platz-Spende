@@ -114,6 +114,23 @@
     num.className = "cell-num";
     num.textContent = f.id;
     cell.appendChild(num);
+    if (f.status === "verkauft"){
+      var soldName = f.sponsor || f.pending_name || "";
+      var label = document.createElement("span");
+      label.className = "cell-sold-label";
+      label.title = soldName ? ("Verkauft an " + soldName) : "Verkauft";
+      if (soldName){
+        var tag = document.createElement("span");
+        tag.className = "sold-tag";
+        tag.textContent = "Verkauft an";
+        label.appendChild(tag);
+      }
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "sold-name";
+      nameSpan.textContent = soldName || "Verkauft";
+      label.appendChild(nameSpan);
+      cell.appendChild(label);
+    }
     cell.addEventListener("click", function(){ openModal(f); });
     return cell;
   }
@@ -203,6 +220,11 @@
         '<p class="desc">Frei zur Unterstützung. Nach Eingang eurer Spende stellen wir euer Logo auf dieses Feld.</p>'+
         '<input class="email-field" type="text" placeholder="Name / Firma" id="reserveName">'+
         '<input class="email-field" type="email" placeholder="eure@email.de" id="reserveEmail">'+
+        '<div class="logo-upload-field">'+
+          '<label for="reserveLogo">Logo oder Foto (optional, PNG/JPEG, max. 3 MB)</label>'+
+          '<input type="file" accept="image/png,image/jpeg" id="reserveLogo">'+
+          '<p class="logo-upload-hint" id="reserveLogoHint" style="display:none;"></p>'+
+        '</div>'+
         '<label class="consent-checkbox" for="reserveConsent">'+
           '<input type="checkbox" id="reserveConsent">'+
           '<span>Ich bin damit einverstanden, dass mein Name (bzw. das Logo meines Unternehmens) auf der Website und der Unterstützer-Tafel im Vereinsheim veröffentlicht wird. Widerruf jederzeit per E-Mail an Phildietrich@web.de möglich.</span>'+
@@ -230,11 +252,31 @@
       rb.addEventListener("click", async function(){
         var nameEl = document.getElementById("reserveName");
         var emailEl = document.getElementById("reserveEmail");
+        var logoEl = document.getElementById("reserveLogo");
+        var logoHintEl = document.getElementById("reserveLogoHint");
         var consentEl = document.getElementById("reserveConsent");
         var errEl = document.getElementById("reserveError");
         var valid = true;
         if (!nameEl.value.trim()){ nameEl.classList.add("input-error"); valid = false; } else nameEl.classList.remove("input-error");
         if (!emailEl.value.trim()){ emailEl.classList.add("input-error"); valid = false; } else emailEl.classList.remove("input-error");
+
+        var logoFile = logoEl.files[0] || null;
+        logoHintEl.style.display = "none";
+        if (logoFile){
+          var allowedTypes = ["image/png","image/jpeg"];
+          if (allowedTypes.indexOf(logoFile.type) === -1){
+            logoHintEl.textContent = "Nur PNG oder JPEG werden unterstützt.";
+            logoHintEl.classList.add("error");
+            logoHintEl.style.display = "block";
+            valid = false;
+          } else if (logoFile.size > 3 * 1024 * 1024){
+            logoHintEl.textContent = "Datei zu groß (max. 3 MB).";
+            logoHintEl.classList.add("error");
+            logoHintEl.style.display = "block";
+            valid = false;
+          }
+        }
+
         if (!consentEl.checked){
           errEl.textContent = "Bitte bestätigt die Veröffentlichung eures Namens, um fortzufahren.";
           errEl.style.display = "block";
@@ -261,8 +303,30 @@
         }
 
         // Reservierung ist bereits in der Datenbank gespeichert (siehe oben).
-        // Die Benachrichtigung ist nur ein "nice to have" -- schlägt sie fehl,
+        // Logo-Upload und Benachrichtigung sind beide "nice to have" -- schlagen sie fehl,
         // bleibt die Reservierung trotzdem gültig, es wird nur eine Warnung geloggt.
+        if (logoFile){
+          try {
+            rb.textContent = "Logo wird hochgeladen …";
+            var base64 = await new Promise(function(resolve, reject){
+              var reader = new FileReader();
+              reader.onload = function(){ resolve(reader.result.split(",")[1]); };
+              reader.onerror = reject;
+              reader.readAsDataURL(logoFile);
+            });
+            await sb.functions.invoke("upload-logo", {
+              body: {
+                field_id: f.id,
+                email: emailEl.value.trim(),
+                content_type: logoFile.type,
+                file_base64: base64
+              }
+            });
+          } catch (logoErr){
+            console.error("Logo konnte nicht hochgeladen werden:", logoErr);
+          }
+        }
+
         try {
           await sb.functions.invoke("notify-reservation", {
             body: {
