@@ -85,10 +85,10 @@
       <p>Klickt auf ein freies Feld oder eine Sonderfläche und seht Preis, Größe und Feldnummer.</p>
     </li>
     <li><span class="step-num">2</span>Unterstützen
-      <p>Mit Name und E-Mail-Adresse reserviert ihr das Feld. Wir melden uns mit den Daten für eure Spende.</p>
+      <p>Mit Name, E-Mail-Adresse und optional eurem Logo oder Foto reserviert ihr das Feld. Wir melden uns mit den Daten für eure Spende.</p>
     </li>
-    <li><span class="step-num">3</span>Logo einreichen
-      <p>Nach Eingang eurer Spende schalten wir euer Feld frei und stellen euer Logo auf den Platz.</p>
+    <li><span class="step-num">3</span>Fertig!
+      <p>Nach Eingang eurer Spende schalten wir euer Feld frei – euer Logo erscheint auf dem Platz und auf unserer Unterstützer-Tafel im Vereinsheim.</p>
     </li>
   </ol>
 </section>
@@ -133,7 +133,7 @@
     num.textContent = f.id;
     cell.appendChild(num);
     if (f.status === "verkauft"){
-      var soldName = f.sponsor || f.pending_name || "";
+      var soldName = f.consent_veroeffentlichung ? (f.sponsor || f.pending_name || "") : "";
       var label = document.createElement("span");
       label.className = "cell-sold-label";
       label.title = soldName ? ("Verkauft an " + soldName) : "Verkauft";
@@ -245,21 +245,22 @@
         '</div>'+
         '<label class="consent-checkbox" for="reserveConsent">'+
           '<input type="checkbox" id="reserveConsent">'+
-          '<span>Ich bin damit einverstanden, dass mein Name (bzw. das Logo meines Unternehmens) auf der Website und der Unterstützer-Tafel im Vereinsheim veröffentlicht wird. Widerruf jederzeit per E-Mail an Phildietrich@web.de möglich.</span>'+
+          '<span>Ja, mein Name (bzw. das Logo meines Unternehmens) darf auf der Website und der Unterstützer-Tafel im Vereinsheim veröffentlicht werden. Widerruf jederzeit per E-Mail an Phildietrich@web.de möglich.</span>'+
         '</label>'+
+        '<p class="modal-note">Ohne Haken bleibt eure Spende anonym: Euer Feld wird dann nur als „Verkauft" ohne Namen oder Logo angezeigt, intern bleibt eure Spende natürlich trotzdem zugeordnet.</p>'+
         '<button class="btn-primary" id="reserveBtn">Feld reservieren</button>'+
         '<p class="modal-error" id="reserveError" style="display:none;"></p>'+
-        '<p class="modal-note">Ihr erhaltet die Kontodaten für eure Spende per E-Mail. Freigabe erfolgt manuell nach Zahlungseingang.</p>'+
-        '<p class="modal-note"><strong>Hinweis:</strong> Euer Logo oder Foto wird dazu genutzt, später eine Unterstützer-Tafel zu erstellt.</p>';
+        '<p class="modal-note">Ihr erhaltet die Kontodaten für eure Spende per E-Mail. Freigabe erfolgt manuell nach Zahlungseingang.</p>';
     } else if (f.status === "reserviert"){
       body =
         '<div class="modal-kicker">Feld '+f.id+'</div>'+
         '<h3>Bereits reserviert</h3>'+
         '<p class="desc">Dieses Feld wird gerade für einen Spender vorbereitet. Schaut gern bald wieder vorbei – oder wählt eines der freien Felder.</p>';
     } else {
+      var publicName = f.consent_veroeffentlichung ? f.sponsor : null;
       body =
         '<div class="modal-kicker">Feld '+f.id+'</div>'+
-        '<h3>'+(f.sponsor || "Vielen Dank!")+'</h3>'+
+        '<h3>'+(publicName || "Vielen Dank!")+'</h3>'+
         '<p class="desc">Dieses Feld wird bereits unterstützt. Vielen Dank für die Unterstützung!</p>';
     }
     modal.innerHTML = '<button class="modal-close" id="modalClose" aria-label="Schließen">×</button>' + body;
@@ -295,13 +296,7 @@
           }
         }
 
-        if (!consentEl.checked){
-          errEl.textContent = "Bitte bestätigt die Veröffentlichung eures Namens, um fortzufahren.";
-          errEl.style.display = "block";
-          valid = false;
-        } else {
-          errEl.style.display = "none";
-        }
+        errEl.style.display = "none";
         if (!valid) return;
 
         rb.disabled = true;

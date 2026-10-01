@@ -50,6 +50,7 @@
     var { data, error } = await sb.from("fields")
       .select("*")
       .eq("status","verkauft")
+      .eq("consent_veroeffentlichung", true)
       .order("row_num").order("col_num");
 
     if (error){
